@@ -1,0 +1,20 @@
+services:
+  # redis:
+  #   image: redis:latest
+  #   restart: unless-stopped
+  #   command: redis-server --maxmemory 100kb --maxmemory-policy allkeys-lru
+  #   ports:
+  #     - 6379:6379
+
+  chia_wallet:
+    image: ghcr.io/chia-network/chia:latest
+    restart: unless-stopped
+    environment:
+      TZ: America/Los_Angeles
+      self_hostname: 0.0.0.0
+      log_level: INFO
+      service: wallet
+    ports:
+      - 9256:9256
+    volumes:
+      - ./wallet-data:/root/.chia/mainnet

@@ -17,7 +17,7 @@ const OfferSummary: FC<OfferSummaryProps> = ({
   return (
     <div
       className={`p-4 rounded-md flex items-center space-x-2 ${
-        isValid ? 'bg-white' : 'bg-gray-300'
+        isValid ? 'bg-black' : 'bg-red-900'
       }`}
     >
       <span>{offeredAmount}x {offeredName}</span>
