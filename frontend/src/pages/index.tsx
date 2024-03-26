@@ -1,23 +1,25 @@
 import { FC, useEffect, useState } from 'react';
 
+import { connectWebSocket, disconnectWebSocket, onOfferData, offOfferData } from '@/utils/websocketListener';
 import { OfferData } from '@/types/Offer';
-import OfferSummary from '../components/OfferSummary';
+import OfferSummary from '@/components/OfferSummary';
 
-const { WEBSOCKET_HOST, WEBSOCKET_PORT } = process.env;
 
 const Home: FC = () => {
   const [offerDataList, setOfferDataList] = useState<OfferData[]>([]);
 
   useEffect(() => {
-    const webSocket = new WebSocket(`ws://${WEBSOCKET_HOST}:${WEBSOCKET_PORT}`);
+    connectWebSocket();
 
-    webSocket.onmessage = (event) => {
-      const data: OfferData = JSON.parse(event.data);
-      setOfferDataList((prevDataList) => [data, ...prevDataList.slice(0, 24)]);
+    const handleOfferData = (newOffer: OfferData) => {
+      setOfferDataList((prevDataList) => [newOffer, ...prevDataList.slice(0, 24)]);
     };
 
+    onOfferData(handleOfferData);
+    
     return () => {
-      webSocket.close();
+      offOfferData(handleOfferData);
+      disconnectWebSocket();
     };
   }, []);
 
