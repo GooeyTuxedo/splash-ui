@@ -2,6 +2,11 @@ import express from 'express';
 import http from 'http';
 import WebSocket from 'ws';
 
+import { OfferHashRequest, OfferData } from './types/Offer';
+import { getOfferData } from './utils/walletApi';
+
+const { PORT } = process.env;
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -9,23 +14,27 @@ const wss = new WebSocket.Server({ server });
 app.use(express.json());
 
 // HTTP server endpoint
-app.post('/offer', (req, res) => {
-  const { offer } = req.body;
+app.post('/offer', async (req, res) => {
+  try {
+    const { offer } = req.body as OfferHashRequest;
   
-  // Transform the event data
-  const transformedData = {
-    // Perform any necessary data transformation here
-    transformedOffer: offer.toUpperCase(),
-  };
+    // Fetch offer summary from the wallet API
+    const newOfferData = await getOfferData({ offer }) as OfferData;
   
-  // Send the transformed data to all connected WebSocket clients
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(transformedData));
-    }
-  });
-  
-  res.sendStatus(200);
+    // Send the transformed offer data to all connected WebSocket clients
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(newOfferData));
+      }
+    });
+
+    console.log(`offer data is valid: ${newOfferData.isValid}`);
+    
+    res.sendStatus(200);  
+  } catch (error) {
+    console.log(`OFFER ENDPOINT ERROR: ${error}`);
+    res.sendStatus(500);
+  }
 });
 
 // WebSocket server
@@ -37,7 +46,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-const port = process.env.PORT || 3000;
+const port = PORT || 3001;
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

@@ -1,6 +1,7 @@
-import { OfferData, OfferHashRequest } from "@/types/Offer";
 import { RPCAgent, setLogLevel } from "chia-agent";
 import { check_offer_validity, get_offer_summary } from "chia-agent/api/rpc/wallet";
+
+import { OfferData, OfferHashRequest } from "../types/Offer";
 
 const {
   WALLET_RPC_HOST,
@@ -12,7 +13,8 @@ setLogLevel("debug");
 const agent = new RPCAgent({
   service: "wallet",
   host: WALLET_RPC_HOST || "localhost",
-  port: WALLET_RPC_PORT ? Number(WALLET_RPC_PORT) : 9256
+  port: WALLET_RPC_PORT ? Number(WALLET_RPC_PORT) : 9256,
+  skip_hostname_verification: true
 });
 
 
@@ -27,14 +29,15 @@ export const checkOfferValidity = async (data: OfferHashRequest): Promise<boolea
 
 export const getOfferData = async (data: OfferHashRequest): Promise<OfferData | void> => {
   try {
-    const isValid = await checkOfferValidity(data);
     const response = await get_offer_summary(agent, data);
-
+    
     const {
       offered,
       fees,
       requested,
     } = response.summary;
+
+    const isValid = await checkOfferValidity(data);
 
     const offerData = {
       isValid,

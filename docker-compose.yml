@@ -1,13 +1,22 @@
 services:
-  # redis:
-  #   image: redis:latest
-  #   restart: unless-stopped
-  #   command: redis-server --maxmemory 100kb --maxmemory-policy allkeys-lru
-  #   ports:
-  #     - 6379:6379
+  backend:
+    build:
+      context: ./backend
+    container_name: offers-backend
+    depends_on: [ chia_wallet ]
+    environment:
+      CHIA_ROOT: /app/wallet-data
+      PORT: 3001
+      WALLET_RPC_HOST: chia-wallet
+      WALLET_RPC_PORT: 9256
+    ports:
+      - 3001:3001
+    volumes:
+      - ./wallet-data:/app/wallet-data
 
   chia_wallet:
     image: ghcr.io/chia-network/chia:latest
+    container_name: chia-wallet
     restart: unless-stopped
     environment:
       TZ: America/Los_Angeles
@@ -18,3 +27,14 @@ services:
       - 9256:9256
     volumes:
       - ./wallet-data:/root/.chia/mainnet
+
+  splash:
+    image: dexiespace/splash:latest
+    container_name: splash-server
+    restart: unless-stopped
+    depends_on: [ backend ]
+    ports:
+      - 11551:11551
+    command:
+      - --listen-address=/ip4/0.0.0.0/tcp/11551
+      - --offer-hook=http://offers-backend:3001/offer/
